@@ -1,0 +1,3 @@
+C:\Users\hyzh\source\repos\_INTLS\x64\Release\libcurl.dll
+C:\Users\hyzh\source\repos\_INTLS\x64\Release\zlib1.dll
+C:\Users\hyzh\source\repos\_INTLS\_INTLS\x64\Release\_INTLS.vcxproj.Up2Date
