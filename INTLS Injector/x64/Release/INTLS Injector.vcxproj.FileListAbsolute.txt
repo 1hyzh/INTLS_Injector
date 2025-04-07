@@ -1,0 +1,3 @@
+C:\Users\hyzh\source\repos\INTLS Injector\x64\Release\libcurl.dll
+C:\Users\hyzh\source\repos\INTLS Injector\x64\Release\zlib1.dll
+C:\Users\hyzh\source\repos\INTLS Injector\INTLS Injector\x64\Release\INTLS In.0391199B.Up2Date
