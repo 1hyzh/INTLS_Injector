@@ -7,6 +7,30 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+/*
+          _____                    _____                _____                    _____            _____
+         /\    \                  /\    \              /\    \                  /\    \          /\    \
+        /::\    \                /::\____\            /::\    \                /::\____\        /::\    \
+        \:::\    \              /::::|   |            \:::\    \              /:::/    /       /::::\    \
+         \:::\    \            /:::::|   |             \:::\    \            /:::/    /       /::::::\    \
+          \:::\    \          /::::::|   |              \:::\    \          /:::/    /       /:::/\:::\    \
+           \:::\    \        /:::/|::|   |               \:::\    \        /:::/    /       /:::/__\:::\    \
+           /::::\    \      /:::/ |::|   |               /::::\    \      /:::/    /        \:::\   \:::\    \
+  ____    /::::::\    \    /:::/  |::|   | _____        /::::::\    \    /:::/    /       ___\:::\   \:::\    \
+ /\   \  /:::/\:::\    \  /:::/   |::|   |/\    \      /:::/\:::\    \  /:::/    /       /\   \:::\   \:::\    \
+/::\   \/:::/  \:::\____\/:: /    |::|   /::\____\    /:::/  \:::\____\/:::/____/       /::\   \:::\   \:::\____\
+\:::\  /:::/    \::/    /\::/    /|::|  /:::/    /   /:::/    \::/    /\:::\    \       \:::\   \:::\   \::/    /
+ \:::\/:::/    / \/____/  \/____/ |::| /:::/    /   /:::/    / \/____/  \:::\    \       \:::\   \:::\   \/____/
+  \::::::/    /                   |::|/:::/    /   /:::/    /            \:::\    \       \:::\   \:::\    \
+   \::::/____/                    |::::::/    /   /:::/    /              \:::\    \       \:::\   \:::\____\
+    \:::\    \                    |:::::/    /    \::/    /                \:::\    \       \:::\  /:::/    /
+     \:::\    \                   |::::/    /      \/____/                  \:::\    \       \:::\/:::/    /
+      \:::\    \                  /:::/    /                                 \:::\    \       \::::::/    /
+       \:::\____\                /:::/    /                                   \:::\____\       \::::/    /
+        \::/    /                \::/    /                                     \::/    /        \::/    /
+         \/____/                  \/____/                                       \/____/          \/____/
+*/
+
 using json = nlohmann::json;
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
@@ -54,7 +78,7 @@ bool DownloadToFile(const std::string& url, const std::string& filePath) {
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nullptr);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // Follow redirects
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
@@ -73,7 +97,7 @@ bool EnsureFolderExists(const std::string& folderPath) {
 bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        std::cerr << "[-] Failed to create process snapshot!\n";
+        std::cerr << "[-]Failed to create process snapshot!\n";
         return false;
     }
 
@@ -81,7 +105,7 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
     pe32.dwSize = sizeof(PROCESSENTRY32W);
 
     if (!Process32FirstW(hSnapshot, &pe32)) {
-        std::cerr << "[-] Failed to get first process!\n";
+        std::cerr << "[-]Failed to get first process!\n";
         CloseHandle(hSnapshot);
         return false;
     }
@@ -96,25 +120,25 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
     CloseHandle(hSnapshot);
 
     if (!processId) {
-        std::cerr << "[-] Process not found: javaw.exe\n";
+        std::cerr << "[-]Process not found: javaw.exe\n";
         return false;
     }
 
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
     if (!hProcess) {
-        std::cerr << "[-] Failed to open target process!\n";
+        std::cerr << "[-]Failed to open target process!\n";
         return false;
     }
 
     LPVOID allocMemory = VirtualAllocEx(hProcess, nullptr, dllPath.size() + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!allocMemory) {
-        std::cerr << "[-] Failed to allocate memory in target process!\n";
+        std::cerr << "\[-]Failed to allocate memory in target process!\n";
         CloseHandle(hProcess);
         return false;
     }
 
     if (!WriteProcessMemory(hProcess, allocMemory, dllPath.c_str(), dllPath.size() + 1, nullptr)) {
-        std::cerr << "[-] Failed to write to memory in target process!\n";
+        std::cerr << "[-]Failed to write to memory in target process!\n";
         VirtualFreeEx(hProcess, allocMemory, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
@@ -122,7 +146,7 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
 
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
     if (!hKernel32) {
-        std::cerr << "[-] Failed to get handle to kernel32.dll!\n";
+        std::cerr << "[-]Failed to get handle to kernel32.dll!\n";
         VirtualFreeEx(hProcess, allocMemory, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
@@ -133,7 +157,7 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
         allocMemory, 0, nullptr);
 
     if (!hThread) {
-        std::cerr << "[-] Failed to create remote thread!\n";
+        std::cerr << "[-]Failed to create remote thread!\n";
         VirtualFreeEx(hProcess, allocMemory, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
@@ -144,34 +168,36 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
     CloseHandle(hThread);
     CloseHandle(hProcess);
 
-    std::cout << "[+] DLL injected successfully!\n";
+    std::cout << "[+]DLL injected successfully!\n";
     return true;
 }
 
 int main() {
-    std::cerr << "[+]INTLS Bootstrapper v0.3";
-    //std::cerr << "          _____                    _____                _____                    _____            _____          ";
-    //std::cerr << "         /\    \                  /\    \              /\    \                  /\    \          /\    \         ";
-    //std::cerr << "        /::\    \                /::\____\            /::\    \                /::\____\        /::\    \        ";
-    //std::cerr << "        \:::\    \              /::::|   |            \:::\    \              /:::/    /       /::::\    \       ";
-    //std::cerr << "         \:::\    \            /:::::|   |             \:::\    \            /:::/    /       /::::::\    \      ";
-    //std::cerr << "          \:::\    \          /::::::|   |              \:::\    \          /:::/    /       /:::/\:::\    \     ";
-    //std::cerr << "           \:::\    \        /:::/|::|   |               \:::\    \        /:::/    /       /:::/__\:::\    \    ";
-    //std::cerr << "           /::::\    \      /:::/ |::|   |               /::::\    \      /:::/    /        \:::\   \:::\    \   ";
-    //std::cerr << "  ____    /::::::\    \    /:::/  |::|   | _____        /::::::\    \    /:::/    /       ___\:::\   \:::\    \  ";
-    //std::cerr << " /\   \  /:::/\:::\    \  /:::/   |::|   |/\    \      /:::/\:::\    \  /:::/    /       /\   \:::\   \:::\    \ ";
-    //std::cerr << "/::\   \/:::/  \:::\____\/:: /    |::|   /::\____\    /:::/  \:::\____\/:::/____/       /::\   \:::\   \:::\____\"";
-    //std::cerr << "\:::\  /:::/    \::/    /\::/    /|::|  /:::/    /   /:::/    \::/    /\:::\    \       \:::\   \:::\   \::/    /";
-    //std::cerr << " \:::\/:::/    / \/____/  \/____/ |::| /:::/    /   /:::/    / \/____/  \:::\    \       \:::\   \:::\   \/____/ ";
-    //std::cerr << "  \::::::/    /                   |::|/:::/    /   /:::/    /            \:::\    \       \:::\   \:::\    \     ";
-    //std::cerr << "   \::::/____/                    |::::::/    /   /:::/    /              \:::\    \       \:::\   \:::\____\    ";
-    //std::cerr << "    \:::\    \                    |:::::/    /    \::/    /                \:::\    \       \:::\  /:::/    /    ";
-    //std::cerr << "     \:::\    \                   |::::/    /      \/____/                  \:::\    \       \:::\/:::/    /     ";
-    //std::cerr << "      \:::\    \                  /:::/    /                                 \:::\    \       \::::::/    /      ";
-    //std::cerr << "       \:::\____\                /:::/    /                                   \:::\____\       \::::/    /       ";
-    //std::cerr << "        \::/    /                \::/    /                                     \::/    /        \::/    /        ";
-    //std::cerr << "         \/____/                  \/____/                                       \/____/          \/____/         ";
-    //std::cerr << "                                                                                                                 ";
+    std::cerr << "[+]INTLS Bootstrapper v0.3\n";
+    std::cerr << "          _____                    _____                _____                    _____            _____          \n";
+    std::cerr << "         /\\    \\                  /\\    \\              /\\    \\                  /\\    \\          /\\    \\         \n";
+    std::cerr << "        /::\\    \\                /::\\____\\            /::\\    \\                /::\\____\\        /::\\    \\        \n";
+    std::cerr << "        \\:::\\    \\              /::::|   |            \\:::\\    \\              /:::/    /       /::::\\    \\       \n";
+    std::cerr << "         \\:::\\    \\            /:::::|   |             \\:::\\    \\            /:::/    /       /::::::\\    \\      \n";
+    std::cerr << "          \\:::\\    \\          /::::::|   |              \\:::\\    \\          /:::/    /       /:::/\\:::\\    \\     \n";
+    std::cerr << "           \\:::\\    \\        /:::/|::|   |               \\:::\\    \\        /:::/    /       /:::/__\\:::\\    \\    \n";
+    std::cerr << "           /::::\\    \\      /:::/ |::|   |               /::::\\    \\      /:::/    /        \\:::\\   \\:::\\    \\   \n";
+    std::cerr << "  ____    /::::::\\    \\    /:::/  |::|   | _____        /::::::\\    \\    /:::/    /       ___\\:::\\   \\:::\\    \\  \n";
+    std::cerr << " /\\   \\  /:::/\\:::\\    \\  /:::/   |::|   |/\\    \\      /:::/\\:::\\    \\  /:::/    /       /\\   \\:::\\   \\:::\\    \\ \n";
+    std::cerr << "/::\\   \\/:::/  \\:::\\____\\/:: /    |::|   /::\\____\\    /:::/  \\:::\\____\\/:::/____/       /::\\   \\:::\\   \\:::\\____\\\n";
+    std::cerr << "\\:::\\  /:::/    \\::/    /\\::/    /|::|  /:::/    /   /:::/    \\::/    /\\:::\\    \\       \\:::\\   \\:::\\   \\::/    /\n";
+    std::cerr << " \\:::\\/:::/    / \\/____/  \\/____/ |::| /:::/    /   /:::/    / \\/____/  \\:::\\    \\       \\:::\\   \\:::\\   \\/____/ \n";
+    std::cerr << "  \\::::::/    /                   |::|/:::/    /   /:::/    /            \\:::\\    \\       \\:::\\   \\:::\\    \\     \n";
+    std::cerr << "   \\::::/____/                    |::::::/    /   /:::/    /              \\:::\\    \\       \\:::\\   \\:::\\____\\    \n";
+    std::cerr << "    \\:::\\    \\                    |:::::/    /    \\::/    /                \\:::\\    \\       \\:::\\  /:::/    /    \n";
+    std::cerr << "     \\:::\\    \\                   |::::/    /      \\/____/                  \\:::\\    \\       \\:::\\/:::/    /     \n";
+    std::cerr << "      \\:::\\    \\                  /:::/    /                                 \\:::\\    \\       \\::::::/    /      \n";
+    std::cerr << "       \\:::\\____\\                /:::/    /                                   \\:::\\____\\       \\::::/    /       \n";
+    std::cerr << "        \\::/    /                \\::/    /                                     \\::/    /        \\::/    /        \n";
+    std::cerr << "         \\/____/                  \\/____/                                       \\/____/          \\/____/         \n";
+    std::cerr << "                                                                                                                  \n";
+
+
 
     const std::string versionURL = "https://raw.githubusercontent.com/1hyzh/intls_ver/refs/heads/main/version.json";
     const std::string localVersionPath = "C:\\INTLS\\local_version.json";
@@ -180,15 +206,14 @@ int main() {
 
     json remoteJson;
     if (!ReadJsonFromUrl(versionURL, remoteJson)) {
-        std::cerr << "[-] Failed to fetch remote version info.\n";
+        std::cerr << "[-]Failed to fetch remote version info.\n";
         return 1;
     }
 
     double latestVersion = remoteJson.value("latestVersion", 0.0);
     std::string downloadURL = remoteJson.value("downloadURL", "");
 
-    // Log the remote version for debugging
-    std::cout << "[*] Remote latest version: " << latestVersion << "\n";
+    std::cout << "[*]Remote latest version: " << latestVersion << "\n";
 
     double currentVersion = 0.0;
     std::ifstream in(localVersionPath);
@@ -202,40 +227,45 @@ int main() {
         in.close();
     }
 
-    // Log the local version for debugging
-    std::cout << "[*] Local current version: " << currentVersion << "\n";
+    std::cout << "[*]Local current version: " << currentVersion << "\n";
 
     bool dllExists = GetFileAttributesA(dllPath.c_str()) != INVALID_FILE_ATTRIBUTES;
 
-    std::cout << "[i] Current Version: " << currentVersion << " | Latest Version: " << latestVersion << "\n";
+    std::cout << "[i]Current Version: " << currentVersion << " | Latest Version: " << latestVersion << "\n";
 
     if (!dllExists || latestVersion > currentVersion) {
-        std::cout << "[+] New version detected or DLL missing. Updating...\n";
+        std::cout << "[+]New version detected or DLL missing. Updating...\n";
 
         if (!EnsureFolderExists(folderPath)) {
-            std::cerr << "[-] Failed to create folder: " << folderPath << " (Run as Admin)\n";
+            std::cerr << "[-]Failed to create folder: " << folderPath << " (Run as Admin)\n";
             return 1;
         }
 
         if (!DownloadToFile(downloadURL, dllPath)) {
-            std::cerr << "[-] Failed to download DLL from: " << downloadURL << "\n";
+            std::cerr << "[-]Failed to download DLL from: " << downloadURL << "\n";
             return 1;
         }
 
-        // Log DLL file size
         DWORD fileSize = GetFileSize(CreateFileA(dllPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL), NULL);
-        std::cout << "[*] Downloaded DLL size: " << fileSize << " bytes\n";
+        std::cout << "[*]Downloaded DLL size: " << fileSize << " bytes\n";
 
         std::ofstream out(localVersionPath);
         out << json{ {"latestVersion", latestVersion} };
         out.close();
 
-        std::cout << "[+] DLL downloaded and version updated.\n";
+        std::cout << "[+]DLL downloaded and version updated.\n";
     }
     else {
-        std::cout << "[=] DLL is up-to-date. No update needed.\n";
+        std::cout << "[=]DLL is up-to-date. No update needed.\n";
     }
 
     InjectDLL(L"javaw.exe", dllPath);
+    std::cerr << "[i]Press [ENTER] to close this window!";
+    while (!(GetAsyncKeyState(VK_RETURN) & 0x8000)) {
+        // Do nothing, just wait for Enter key
+        Sleep(1); // avoid 100% CPU usage
+    }
     return 0;
+
+    
 }
