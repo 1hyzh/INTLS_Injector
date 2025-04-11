@@ -149,7 +149,7 @@ bool InjectDLL(const std::wstring& processName, const std::string& dllPath) {
 }
 
 int main() {
-    std::cerr << "[+]INTLS Bootstrapper v0.5\n";
+    std::cerr << "[+]INTLS Bootstrapper v0.7\n";
     std::cerr << "          _____                    _____                _____                    _____            _____          \n";
     std::cerr << "         /\\    \\                  /\\    \\              /\\    \\                  /\\    \\          /\\    \\         \n";
     std::cerr << "        /::\\    \\                /::\\____\\            /::\\    \\                /::\\____\\        /::\\    \\        \n";
@@ -185,6 +185,7 @@ int main() {
 
     double latestVersion = remoteJson.value("latestVersion", 0.0);
     std::string downloadURL = remoteJson.value("downloadURL", "");
+	std::string changelog = remoteJson.value("changelog", "");
 
     // Log the remote version for debugging
     std::cout << "[*]Latest version: " << latestVersion << "\n";
@@ -210,6 +211,8 @@ int main() {
 
     if (!dllExists || latestVersion > currentVersion) {
         std::cout << "[+] New version detected or DLL missing. Updating...\n";
+        std::cout << "[i] Changelog:\n";
+		std::cout << changelog << "\n";
 
         if (!EnsureFolderExists(folderPath)) {
             std::cerr << "[-] Failed to create folder: " << folderPath << " (Run as Admin)\n";
